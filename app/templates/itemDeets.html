@@ -1,9 +1,19 @@
 <html>
     <head>
+        <link rel="stylesheet" type=text/css href="{{url_for('static', filename='nav_bar.css')}}">
         <title>Team Info</title>
-        <h1>{{team_deets.team_name}}</h1>
+
     </head>
     <body>
+        <div class="topnav">
+  <a class="active" href="#home">Home</a>
+  <div class="login-container">
+    <form action="/action_page.php">
+      <a href="#" class="button">Login</a>
+    </form>
+  </div>
+</div>
+        <h1>{{team_deets.team_name}}</h1>
         <div>
             <p>
                 {{team_deets.team_details}}
