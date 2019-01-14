@@ -38,6 +38,14 @@ class Teams(Base):
     #         'team_details': self.details
     #     }
 
+#
+# class User(Base):
+#     __tablename__ = 'users'
+#     id = Column(Integer, primary_key=True)
+#     name = Column(String(250), nullable=False)
+#     email = Column(String(250), nullable=False)
+#     picture = Column(String(250))
+
 
 engine = create_engine('sqlite:///catalog.db', connect_args={'check_same_thread': False})
 
