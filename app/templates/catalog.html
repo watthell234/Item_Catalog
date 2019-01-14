@@ -7,7 +7,7 @@
         {% for i in categories %}
         <div>
             <p>
-                <a href="#">{{i.category_name}}</a>
+                <a href='{{url_for('show_all_teams', category_id=i.id)}}'>{{i.category_name}}</a>
             </p>
 
         </div>
