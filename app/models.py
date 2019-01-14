@@ -8,19 +8,35 @@ from sqlalchemy import create_engine
 Base = declarative_base()
 
 
-class Categories():
+class Categories(Base):
     __tablename__ = 'categories'
     id = Column(Integer, primary_key=True)
     category_name = Column(String(80), nullable=False)
 
+    # @property
+    # def serialize(self):
+    #     return {
+    #         'category_name': self.category_name,
+    #         'id': self.id
+    #     }
 
-class Items():
-    __tablename__ = 'items'
+
+class Teams(Base):
+    __tablename__ = 'teams'
     id = Column(Integer, primary_key=True)
-    item_name = Column(String(80), nullable=False)
+    team_name = Column(String(80), nullable=False)
     category_id = Column(Integer, ForeignKey('categories.id'))
     category = relationship(Categories)
-    description = Column(String(80))
+    team_details = Column(String(256))
+
+    # @property
+    # def serialize(self):
+    #     return {
+    #         'id': self.id,
+    #         'item_name': self.item_name,
+    #         'category_id': self.category_id,
+    #         'team_details': self.details
+    #     }
 
 
 engine = create_engine('sqlite:///catalog.db', connect_args={'check_same_thread': False})

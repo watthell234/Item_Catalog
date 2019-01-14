@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request, render_template
-from models import Base, engine, Categories, Items
+from models import Base, engine, Categories, Teams
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import create_engine
 
@@ -19,7 +19,7 @@ app = Flask(__name__)
 @app.route('/home')
 def show_catalog():
     categories = session.query(Categories).all()
-    return render_template('catalog.html')
+    return render_template('catalog.html', categories=categories)
 
 
 @app.route('/catalog/<category>/items/')
