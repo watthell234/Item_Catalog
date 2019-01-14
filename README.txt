@@ -1,10 +1,8 @@
-Place your catalog project in this directory.
-
 To run this final project
 
 1. Clone https://github.com/watthell234/Item_Catalog/ repository.
 
-2. Navigate to https://github.com/watthell234/Item_Catalog/tree/master/app 
+2. Navigate to https://github.com/watthell234/Item_Catalog/tree/master/app
 
 2. run models.py to create the database
 

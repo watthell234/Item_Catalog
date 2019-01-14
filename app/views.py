@@ -22,24 +22,45 @@ def show_catalog():
     return render_template('catalog.html', categories=categories)
 
 
-@app.route('/catalog/<category>/items/')
-def show_all_items(category):
-    return render_template('listItems.html')
+@app.route('/catalog/<category_id>/')
+@app.route('/catalog/<category_id>/teams/')
+def show_all_teams(category_id):
+    category = session.query(Categories).filter_by(id=category_id).one()
+    teams = session.query(Teams).filter_by(category_id=category.id).all()
+    return render_template('listItems.html', category=category, teams=teams)
 
 
-@app.route('/catalog/<category>/<item>/')
-def show_item_detail(category, item):
-    return render_template('itemDeets.html')
+@app.route('/catalog/<category_id>/<team_id>/')
+def show_item_detail(category_id, team_id):
+    category = session.query(Categories).filter_by(id=category_id).one()
+    team_deets = session.query(Teams).filter_by(category_id=category.id, id=team_id).one()
+    return render_template('itemDeets.html', team_deets=team_deets)
 
 
-@app.route('/catalog/<category>/<item>/edit')
-def edit_item(category, item):
-    return render_template('editItem.html')
+@app.route('/catalog/<category_id>/<team_id>/edit', methods=['GET', 'POST'])
+def edit_team(category_id, team_id):
+    editedTeam = session.query(Teams).filter_by(id=team_id).one()
+    if request.method == 'POST':
+        if request.form['team_name']:
+            editedTeam.name = request.form['team_name']
+            session.add(editedTeam)
+            session.commit()
+            # flash('Team edited!')
+            return redirect(url_for('show_all_teams', category_id=category_id))
+    return render_template('editItem.html', category_id, team_id)
 
 
-@app.route('/catalog/<category>/<item>/delete')
-def delete_item(category, item):
-    return render_template('deleteItem.html')
+@app.route('/catalog/<category_id>/<team_id>/delete', methods=['GET', 'POST'])
+def delete_item(category_id, team_id):
+    teamToDelete = session.query(Teams).filter_by(id=team_id).one()
+    if request.method == 'POST':
+        if request.form['team_name']:
+            teamToDelete.name = request.form['team_name']
+            session.delete(teamToDelete)
+            session.commit()
+            # flash('Team edited!')
+            return redirect(url_for('show_all_teams', category_id=category_id))
+    return render_template('deleteItem.html', category_id, team_id)
 
 
 if __name__ == '__main__':
