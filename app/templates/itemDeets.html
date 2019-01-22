@@ -1,3 +1,4 @@
+{% include "header.html" %}
 <html>
     <head>
         <link rel="stylesheet" type=text/css href="{{url_for('static', filename='nav_bar.css')}}">
@@ -6,7 +7,7 @@
     </head>
     <body>
         <div class="topnav">
-  <a class="active" href="#home">Home</a>
+  <a class="active" href='{{url_for('show_catalog')}}'>Home</a>
   <div class="login-container">
     <form action="/action_page.php">
       <a href="#" class="button">Login</a>

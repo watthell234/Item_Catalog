@@ -1,11 +1,11 @@
-{% include "header.html" %}
 {% block content %}
 <html>
     <head>
         <title>Sports</title>
+        <a href="{{url_for('showLogin')}}">Log in </a>
     </head>
     <body>
-        
+
     <h1>Sports Catalog</h1>
         {% for i in categories %}
         <div>

@@ -1,5 +1,5 @@
-from flask import Flask, jsonify, request, render_template
-from models import Base, engine, Categories, Teams
+from flask import Flask, jsonify, request, render_template, g, flash
+from models import Base, engine, Categories, Teams, User
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import create_engine
 from oauth2client.client import flow_from_clientsecrets
@@ -9,6 +9,9 @@ from flask import make_response
 from flask_httpauth import HTTPBasicAuth
 import requests
 import json
+import random
+import string
+from flask import session as login_session
 
 import sys
 import codecs
@@ -26,73 +29,129 @@ CLIENT_ID = json.loads(
     open('client_secrets.json', 'r').read())['web']['client_id']
 
 
-@app.route('/oauth/<provider>', methods=['POST'])
-def login(provider):
-    # STEP 1 - Parse the auth code
-    auth_code = request.json.get('auth_code')
-    print("Step 1 - Complete, received auth code %s" % auth_code)
-    if provider == 'google':
-        # STEP 2 - Exchange for a token
-        try:
-            # Upgrade the authorization code into a credentials object
-            oauth_flow = flow_from_clientsecrets('client_secrets.json', scope='')
-            oauth_flow.redirect_uri = 'postmessage'
-            credentials = oauth_flow.step2_exchange(auth_code)
-        except FlowExchangeError:
-            response = make_response(json.dumps('Failed to upgrade the authorization code.'), 401)
-            response.headers['Content-Type'] = 'application/json'
-            return response
-        # Check that the access token is valid.
-        access_token = credentials.access_token
-        url = ('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=%s' % access_token)
-        h = httplib2.Http()
-        result = json.loads(h.request(url, 'GET')[1])
-        # If there was an error in the access token info, abort.
-        if result.get('error') is not None:
-            response = make_response(json.dumps(result.get('error')), 500)
-            response.headers['Content-Type'] = 'application/json'
-        # Get user info
-        h = httplib2.Http()
-        userinfo_url = "https://www.googleapis.com/oauth2/v1/userinfo"
-        params = {'access_token': credentials.access_token, 'alt': 'json'}
-        answer = requests.get(userinfo_url, params=params)
-
-        data = answer.json()
-
-        name = data['name']
-        picture = data['picture']
-        email = data['email']
-
-        # see if user exists, if it doesn't make a new one
-        user = session.query(User).filter_by(email=email).first()
-        if not user:
-            user = User(username=name, picture=picture, email=email)
-            session.add(user)
-            session.commit()
-
-        # STEP 4 - Make token
-        token = user.generate_auth_token(600)
-
-        # STEP 5 - Send back token to the client
-        return jsonify({'token': token.decode('ascii')})
-
-        # return jsonify({'token': token.decode('ascii'), 'duration': 600})
-    else:
-        return 'Unrecoginized Provider'
+@app.route('/login')
+def showLogin():
+    state = ''.join(random.choice(string.ascii_uppercase + string.digits)
+                    for x in xrange(32))
+    login_session['state'] = state
+    # return "The current session state is %s" % login_session['state']
+    return render_template('clientOAuth.html', STATE=state)
 
 
-@app.route('/token')
-@auth.login_required
-def get_auth_token():
-    token = g.user.generate_auth_token()
-    return jsonify({'token': token.decode('ascii')})
+@app.route('/fbconnect', methods=['POST'])
+def fbconnect():
+    if request.args.get('state') != login_session['state']:
+        response = make_response(json.dumps('Invalid state parameter.'), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    access_token = request.data
+    print "access token received %s " % access_token
+
+    app_id = json.loads(open('fb_client_secrets.json', 'r').read())[
+        'web']['app_id']
+    app_secret = json.loads(
+        open('fb_client_secrets.json', 'r').read())['web']['app_secret']
+    url = 'https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id=%s&client_secret=%s&fb_exchange_token=%s' % (
+        app_id, app_secret, access_token)
+    h = httplib2.Http()
+    result = h.request(url, 'GET')[1]
+
+    # Use token to get user info from API
+    userinfo_url = "https://graph.facebook.com/v2.8/me"
+    '''
+        Due to the formatting for the result from the server token exchange we have to
+        split the token first on commas and select the first index which gives us the key : value
+        for the server access token then we split it on colons to pull out the actual token value
+        and replace the remaining quotes with nothing so that it can be used directly in the graph
+        api calls
+    '''
+    token = result.split(',')[0].split(':')[1].replace('"', '')
+
+    url = 'https://graph.facebook.com/v2.8/me?access_token=%s&fields=name,id,email' % token
+    h = httplib2.Http()
+    result = h.request(url, 'GET')[1]
+    # print "url sent for API access:%s"% url
+    # print "API JSON result: %s" % result
+    data = json.loads(result)
+    login_session['provider'] = 'facebook'
+    login_session['username'] = data["name"]
+    login_session['email'] = data["email"]
+    login_session['facebook_id'] = data["id"]
+
+    # The token must be stored in the login_session in order to properly logout
+    login_session['access_token'] = token
+
+    # Get user picture
+    url = 'https://graph.facebook.com/v2.8/me/picture?access_token=%s&redirect=0&height=200&width=200' % token
+    h = httplib2.Http()
+    result = h.request(url, 'GET')[1]
+    data = json.loads(result)
+
+    login_session['picture'] = data["data"]["url"]
+
+    # see if user exists
+    user_id = getUserID(login_session['email'])
+    if not user_id:
+        user_id = createUser(login_session)
+    login_session['user_id'] = user_id
+
+    output = ''
+    output += '<h1>Welcome, '
+    output += login_session['username']
+
+    output += '!</h1>'
+    output += '<img src="'
+    output += login_session['picture']
+    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
+
+    flash("Now logged in as %s" % login_session['username'])
+    return output
+
+
+@app.route('/fbdisconnect')
+def fbdisconnect():
+    facebook_id = login_session['facebook_id']
+    # The access token must me included to successfully logout
+    access_token = login_session['access_token']
+    url = 'https://graph.facebook.com/%s/permissions?access_token=%s' % (facebook_id, access_token)
+    h = httplib2.Http()
+    result = h.request(url, 'DELETE')[1]
+    return "you have been logged out"
+
+
+# User Helper Functions
+
+
+def createUser(login_session):
+    newUser = User(name=login_session['username'], email=login_session[
+                   'email'], picture=login_session['picture'])
+    session.add(newUser)
+    session.commit()
+    user = session.query(User).filter_by(email=login_session['email']).one()
+    return user.id
+
+
+def getUserInfo(user_id):
+    user = session.query(User).filter_by(id=user_id).one()
+    return user
+
+
+def getUserID(email):
+    try:
+        user = session.query(User).filter_by(email=email).one()
+        return user.id
+    except:
+        return None
 
 
 @app.route('/')
 @app.route('/home')
 def show_catalog():
     categories = session.query(Categories).all()
-    return render_template('catalog.html', categories=categories)
+    if 'username' not in login_session:
+        return render_template('publicCatalog.html', categories=categories)
+    else:
+        return render_template('catalog.html', categories=categories)
 
 
 @app.route('/catalog/<category_id>/')
@@ -137,5 +196,6 @@ def delete_team(category_id, team_id):
 
 
 if __name__ == '__main__':
+    app.secret_key = 'super_secret_key'
     app.debug = True
     app.run(host='0.0.0.0', port=5000)
