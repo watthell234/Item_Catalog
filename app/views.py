@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, render_template, g, flash
+from flask import Flask, jsonify, request, render_template, g, flash, redirect, url_for
 from models import Base, engine, Categories, Teams, User
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import create_engine
@@ -25,8 +25,9 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 app = Flask(__name__)
 
-CLIENT_ID = json.loads(
-    open('client_secrets.json', 'r').read())['web']['client_id']
+#
+# CLIENT_ID = json.loads(
+#     open('client_secrets.json', 'r').read())['web']['client_id']
 
 
 @app.route('/login')
@@ -34,7 +35,6 @@ def showLogin():
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
                     for x in xrange(32))
     login_session['state'] = state
-    # return "The current session state is %s" % login_session['state']
     return render_template('clientOAuth.html', STATE=state)
 
 
@@ -95,14 +95,13 @@ def fbconnect():
         user_id = createUser(login_session)
     login_session['user_id'] = user_id
 
-    output = ''
-    output += '<h1>Welcome, '
+    output = '<h1>Welcome, '
     output += login_session['username']
 
     output += '!</h1>'
     output += '<img src="'
     output += login_session['picture']
-    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
+    output += ' "style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
 
     flash("Now logged in as %s" % login_session['username'])
     return output
@@ -118,6 +117,25 @@ def fbdisconnect():
     result = h.request(url, 'DELETE')[1]
     return "you have been logged out"
 
+# Disconnect facebook OAuth
+
+
+@app.route('/disconnect')
+def disconnect():
+    if 'provider' in login_session:
+        if login_session['provider'] == 'facebook':
+            fbdisconnect()
+            del login_session['facebook_id']
+        del login_session['username']
+        del login_session['email']
+        del login_session['picture']
+        del login_session['user_id']
+        del login_session['provider']
+        flash("You have successfully been logged out.")
+        return redirect(url_for('show_catalog'))
+    else:
+        flash("You were not logged in")
+        return redirect(url_for('show_catalog'))
 
 # User Helper Functions
 
