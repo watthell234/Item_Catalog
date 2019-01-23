@@ -189,15 +189,16 @@ def show_team_detail(category_id, team_id):
 
 @app.route('/catalog/<category_id>/<team_id>/edit', methods=['GET', 'POST'])
 def edit_team(category_id, team_id):
+    # category = session.query(Categories).filter_by(id=category_id).one()
     editedTeam = session.query(Teams).filter_by(id=team_id).one()
     if request.method == 'POST':
         if request.form['team_name']:
-            editedTeam.name = request.form['team_name']
+            editedTeam.team_name = request.form['team_name']
             session.add(editedTeam)
             session.commit()
             # flash('Team edited!')
             return redirect(url_for('show_all_teams', category_id=category_id))
-    return render_template('editItem.html', category_id=category_id, team_id=team_id)
+    return render_template('editItem.html', category_id=category_id, team_id=team_id, team=editedTeam)
 
 
 @app.route('/catalog/<category_id>/<team_id>/delete', methods=['GET', 'POST'])
