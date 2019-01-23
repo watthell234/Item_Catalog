@@ -197,7 +197,7 @@ def edit_team(category_id, team_id):
             session.commit()
             # flash('Team edited!')
             return redirect(url_for('show_all_teams', category_id=category_id))
-    return render_template('editItem.html', category_id, team_id)
+    return render_template('editItem.html', category_id=category_id, team_id=team_id)
 
 
 @app.route('/catalog/<category_id>/<team_id>/delete', methods=['GET', 'POST'])
@@ -210,7 +210,7 @@ def delete_team(category_id, team_id):
             session.commit()
             # flash('Team edited!')
             return redirect(url_for('show_all_teams', category_id=category_id))
-    return render_template('deleteItem.html', category_id, team_id)
+    return render_template('deleteItem.html', category_id=category_id, team_id=team_id)
 
 
 if __name__ == '__main__':
