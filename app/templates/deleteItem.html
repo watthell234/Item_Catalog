@@ -1,10 +1,15 @@
+{% block content %}
 {% include "header.html" %}
 <html>
     <head>
-        <title>Delete Item</title>
-        <h1>Delete Item #1</h1>
+        <title>Delete Team</title>
+        <h1>Be careful! you are about to Delete {{team.team_name}}</h1>
     </head>
     <body>
-
+        <form method="POST" action = '{{url_for('delete_team', category_id=category_id,  team_id=team.id)}}'>
+            <button type="submit" name="Delete" value="Delete">Delete</button>
+            <button type="submit" name="Cancel" value="Cancel">Cancel</button>
+        </form>
     </body>
 </html>
+{% endblock %}
