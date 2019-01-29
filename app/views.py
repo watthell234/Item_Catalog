@@ -175,6 +175,8 @@ def show_catalog():
 @app.route('/catalog/<category_id>/')
 @app.route('/catalog/<category_id>/teams/')
 def show_all_teams(category_id):
+    if 'username' not in login_session:
+        return redirect('/login')
     category = session.query(Categories).filter_by(id=category_id).one()
     teams = session.query(Teams).filter_by(category_id=category.id).all()
     return render_template('listItems.html', category=category, teams=teams)
@@ -182,6 +184,8 @@ def show_all_teams(category_id):
 
 @app.route('/catalog/<category_id>/<team_id>/')
 def show_team_detail(category_id, team_id):
+    if 'username' not in login_session:
+        return redirect('/login')
     category = session.query(Categories).filter_by(id=category_id).one()
     team_deets = session.query(Teams).filter_by(category_id=category.id, id=team_id).one()
     return render_template('itemDeets.html', category=category_id, team_deets=team_deets)
@@ -198,6 +202,8 @@ def categoryTeamsJSON(category_id):
 
 @app.route('/catalog/<category_id>/teams/new', methods=['GET', 'POST'])
 def new_team(category_id):
+    if 'username' not in login_session:
+        return redirect('/login')
     category = session.query(Categories).filter_by(id=category_id).one()
     if request.method == 'POST':
         newTeam = Teams(team_name=request.form['team_name'], category_id=category_id,
@@ -213,6 +219,8 @@ def new_team(category_id):
 def edit_team(category_id, team_id):
     # category = session.query(Categories).filter_by(id=category_id).one()
     editedTeam = session.query(Teams).filter_by(id=team_id).one()
+    if 'username' not in login_session:
+        return redirect('/login')
     if request.method == 'POST':
         if request.form['team_name']:
             editedTeam.team_name = request.form['team_name']
@@ -229,6 +237,8 @@ def edit_team(category_id, team_id):
 @app.route('/catalog/<category_id>/<team_id>/delete', methods=['GET', 'POST'])
 def delete_team(category_id, team_id):
     teamToDelete = session.query(Teams).filter_by(id=team_id).one()
+    if 'username' not in login_session:
+        return redirect('/login')
     if request.method == 'POST':
         if request.form.get('Delete') == 'Delete':
             session.delete(teamToDelete)
