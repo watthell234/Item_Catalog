@@ -46,8 +46,8 @@ class Teams(Base):
     def serialize(self):
         return {
             'id': self.id,
-            'item_name': self.item_name,
-            'team_details': self.details,
+            'team_name': self.team_name,
+            'team_details': self.team_details,
             'category_id': self.category_id,
             'user_id': self.user_id
         }

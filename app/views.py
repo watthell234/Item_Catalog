@@ -187,10 +187,26 @@ def show_team_detail(category_id, team_id):
     return render_template('itemDeets.html', category=category_id, team_deets=team_deets)
 
 
-# @app.route('/catalog/<category_id>/new', methods=['GET', 'POST'])
-# def new_team(category_id, team_id):
-#     if request.method == 'POST':
-#         newTeam = Teams(team_name=, category_id=category_id, user_id=, team_detail=)
+# JSON APIs to view Team Information within Category
+@app.route('/catalog/<category_id>/teams/JSON')
+def categoryTeamsJSON(category_id):
+    category = session.query(Categories).filter_by(id=category_id).one()
+    teams = session.query(Teams).filter_by(
+        category_id=category.id).all()
+    return jsonify(Teams=[i.serialize for i in teams])
+
+
+@app.route('/catalog/<category_id>/teams/new', methods=['GET', 'POST'])
+def new_team(category_id):
+    category = session.query(Categories).filter_by(id=category_id).one()
+    if request.method == 'POST':
+        newTeam = Teams(team_name=request.form['team_name'], category_id=category_id,
+                        user_id=category.user_id, team_details=request.form['team_details'])
+        session.add(newTeam)
+        session.commit()
+        return redirect(url_for('show_all_teams', category_id=category_id))
+    else:
+        return render_template('newTeam.html', category_id=category)
 
 
 @app.route('/catalog/<category_id>/<team_id>/edit', methods=['GET', 'POST'])
@@ -203,7 +219,7 @@ def edit_team(category_id, team_id):
             if request.form.get('Edit') == 'Edit':
                 session.add(editedTeam)
                 session.commit()
-            # flash('Team edited!')
+                flash('Team edited!')
                 return redirect(url_for('show_all_teams', category_id=category_id))
             elif request.form.get('Cancel') == 'Cancel':
                 return redirect(url_for('show_all_teams', category_id=category_id))
