@@ -9,3 +9,5 @@ To run this final project
 3. run load_data.py to populate the database
 
 4. run views.py and navigate to localhost:5000 in your browser
+
+5. Use Email: whfymwmdud_1548900357@tfbnw.net and Password: Keyboard234 to use test user
