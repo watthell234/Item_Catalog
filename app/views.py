@@ -45,7 +45,7 @@ def fbconnect():
         response.headers['Content-Type'] = 'application/json'
         return response
     access_token = request.data
-    print "access token received %s " % access_token
+    print("access token received %s " % access_token)
 
     app_id = json.loads(open('fb_client_secrets.json', 'r').read())[
         'web']['app_id']
@@ -95,7 +95,15 @@ def fbconnect():
         user_id = createUser(login_session)
     login_session['user_id'] = user_id
 
+    output = '<h1>Welcome, '
+    output += login_session['username']
+    output += '!</h1>'
+    output += '<img src="'
+    output += login_session['picture']
+    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
+
     flash("Now logged in as %s" % login_session['username'])
+
     return output
 
 
