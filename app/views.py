@@ -113,7 +113,8 @@ def fbdisconnect():
     facebook_id = login_session['facebook_id']
     # The access token must me included to successfully logout
     access_token = login_session['access_token']
-    url = 'https://graph.facebook.com/%s/permissions?access_token=%s' % (facebook_id, access_token)
+    url = 'https://graph.facebook.com/%s/permissions?access_token=%s' % (
+        facebook_id, access_token)
     h = httplib2.Http()
     result = h.request(url, 'DELETE')[1]
     return "you have been logged out"
@@ -159,7 +160,7 @@ def getUserID(email):
     try:
         user = session.query(User).filter_by(email=email).one()
         return user.id
-    except:
+    except BaseException:
         return None
 
 
@@ -204,8 +205,12 @@ def show_team_detail(category_id, team_id):
     if 'username' not in login_session:
         return redirect('/login')
     category = session.query(Categories).filter_by(id=category_id).one()
-    team_deets = session.query(Teams).filter_by(category_id=category.id, id=team_id).one()
-    return render_template('itemDeets.html', category=category_id, team_deets=team_deets)
+    team_deets = session.query(Teams).filter_by(
+        category_id=category.id, id=team_id).one()
+    return render_template(
+        'itemDeets.html',
+        category=category_id,
+        team_deets=team_deets)
 
 
 # JSON APIs to view Team Information within Category
@@ -224,8 +229,11 @@ def new_team(category_id):
 
     category = session.query(Categories).filter_by(id=category_id).one()
     if request.method == 'POST':
-        newTeam = Teams(team_name=request.form['team_name'], category_id=category_id,
-                        user_id=login_session['user_id'], team_details=request.form['team_details'])
+        newTeam = Teams(
+            team_name=request.form['team_name'],
+            category_id=category_id,
+            user_id=login_session['user_id'],
+            team_details=request.form['team_details'])
         session.add(newTeam)
         session.commit()
         return redirect(url_for('show_all_teams', category_id=category_id))
@@ -249,10 +257,20 @@ def edit_team(category_id, team_id):
                 session.add(editedTeam)
                 session.commit()
                 flash('Team edited!')
-                return redirect(url_for('show_all_teams', category_id=category_id))
+                return redirect(
+                    url_for(
+                        'show_all_teams',
+                        category_id=category_id))
             elif request.form.get('Cancel') == 'Cancel':
-                return redirect(url_for('show_all_teams', category_id=category_id))
-    return render_template('editItem.html', category_id=category_id, team_id=team_id, team=editedTeam)
+                return redirect(
+                    url_for(
+                        'show_all_teams',
+                        category_id=category_id))
+    return render_template(
+        'editItem.html',
+        category_id=category_id,
+        team_id=team_id,
+        team=editedTeam)
 
 
 @app.route('/catalog/<category_id>/<team_id>/delete', methods=['GET', 'POST'])
@@ -272,7 +290,11 @@ def delete_team(category_id, team_id):
         elif request.form.get('Cancel') == 'Cancel':
             return redirect(url_for('show_all_teams', category_id=category_id))
 
-    return render_template('deleteItem.html', category_id=category_id, team_id=team_id, team=teamToDelete)
+    return render_template(
+        'deleteItem.html',
+        category_id=category_id,
+        team_id=team_id,
+        team=teamToDelete)
 
 
 if __name__ == '__main__':
