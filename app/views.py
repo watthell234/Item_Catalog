@@ -25,13 +25,12 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 app = Flask(__name__)
 
-#
-# CLIENT_ID = json.loads(
-#     open('client_secrets.json', 'r').read())['web']['client_id']
-
 
 @app.route('/login')
 def showLogin():
+    '''
+        Route for login in using an OAuth client
+    '''
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
                     for x in xrange(32))
     login_session['state'] = state
@@ -40,12 +39,14 @@ def showLogin():
 
 @app.route('/fbconnect', methods=['POST'])
 def fbconnect():
+    '''
+        Connect using OAuth 2.0 flow for facebook
+    '''
     if request.args.get('state') != login_session['state']:
         response = make_response(json.dumps('Invalid state parameter.'), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
     access_token = request.data
-    print("access token received %s " % access_token)
 
     app_id = json.loads(open('fb_client_secrets.json', 'r').read())[
         'web']['app_id']
@@ -204,6 +205,7 @@ def categoryTeamsJSON(category_id):
 def new_team(category_id):
     if 'username' not in login_session:
         return redirect('/login')
+
     category = session.query(Categories).filter_by(id=category_id).one()
     if request.method == 'POST':
         newTeam = Teams(team_name=request.form['team_name'], category_id=category_id,
