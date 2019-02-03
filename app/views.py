@@ -173,6 +173,13 @@ def show_catalog():
         return render_template('catalog.html', categories=categories)
 
 
+# JSON APIs to view Team Information within Category
+@app.route('/catalog/JSON')
+def categoryJSON():
+    categories = session.query(Categories).all()
+    return jsonify(Categories=[i.serialize for i in categories])
+
+
 @app.route('/catalog/<category_id>/')
 @app.route('/catalog/<category_id>/teams/')
 def show_all_teams(category_id):
@@ -181,6 +188,15 @@ def show_all_teams(category_id):
     category = session.query(Categories).filter_by(id=category_id).one()
     teams = session.query(Teams).filter_by(category_id=category.id).all()
     return render_template('listItems.html', category=category, teams=teams)
+
+
+# JSON APIs to view Team details
+@app.route('/catalog/<category_id>/<team_id>/JSON')
+def categoryTeamDeetsJSON(category_id, team_id):
+    category = session.query(Categories).filter_by(id=category_id).one()
+    teams = session.query(Teams.team_details).filter_by(
+        category_id=category.id, id=team_id).all()
+    return jsonify(Teams=teams)
 
 
 @app.route('/catalog/<category_id>/<team_id>/')
