@@ -209,7 +209,7 @@ def new_team(category_id):
     category = session.query(Categories).filter_by(id=category_id).one()
     if request.method == 'POST':
         newTeam = Teams(team_name=request.form['team_name'], category_id=category_id,
-                        user_id=category.user_id, team_details=request.form['team_details'])
+                        user_id=login_session['user_id'], team_details=request.form['team_details'])
         session.add(newTeam)
         session.commit()
         return redirect(url_for('show_all_teams', category_id=category_id))
@@ -223,6 +223,9 @@ def edit_team(category_id, team_id):
     editedTeam = session.query(Teams).filter_by(id=team_id).one()
     if 'username' not in login_session:
         return redirect('/login')
+
+    if editedTeam.user_id != login_session['user_id']:
+        return "<script>function myFunction() {alert('You are not authorized to edit this Team. Please create your own Team in order to edit.');}</script><body onload='myFunction()'>"
     if request.method == 'POST':
         if request.form['team_name']:
             editedTeam.team_name = request.form['team_name']
@@ -241,6 +244,8 @@ def delete_team(category_id, team_id):
     teamToDelete = session.query(Teams).filter_by(id=team_id).one()
     if 'username' not in login_session:
         return redirect('/login')
+    if teamToDelete.user_id != login_session['user_id']:
+        return "<script>function myFunction() {alert('You are not authorized to delete this Team. Please create your own Team in order to delete.');}</script><body onload='myFunction()'>"
     if request.method == 'POST':
         if request.form.get('Delete') == 'Delete':
             session.delete(teamToDelete)
